@@ -29,7 +29,7 @@
 
 <section id="ko" lang="ko">
 <h2>한국어</h2>
-<p class="meta"><strong>시행일:</strong> 2026년 9월 30일</p>
+<p class="meta"><strong>시행일:</strong> 2026년 10월 3일</p>
 <p>Owlight(이하 “앱”)는 Lumen Lab(개인사업자, 이하 “개발자”)이 만든 macOS 메뉴 막대 유틸리티입니다. 이 방침은 앱이 사용자의 정보를 어떻게 다루는지 설명합니다.</p>
 
 <h3>1. 수집하는 개인정보</h3>
@@ -50,12 +50,15 @@
 <h3>5. 앱이 확인하는 시스템 정보</h3>
 <p>기능을 제공하기 위해 앱은 Mac 안에서만 다음 정보를 읽습니다. 이 정보는 저장하거나 외부로 보내지 않습니다.</p>
 <ul>
-  <li>배터리 잔량과 전원 어댑터 연결 여부(불침번의 배터리 지킴이, 충전 중 자동 켜기)</li>
+  <li>배터리 잔량과 전원 어댑터 연결 여부(불침번의 배터리 지킴이, 전원 연결 중 자동 켜기)</li>
   <li>실행 중인 앱 목록과 맨 앞의 앱(자동 켜기 조건, 후광이 비출 윈도우 찾기). 윈도우의 위치와 크기만 확인하며, 윈도우 제목이나 화면 내용은 읽거나 녹화하지 않습니다.</li>
+  <li>Mac이 잠들거나 깨어났다는 macOS 알림과 디스플레이가 켜져 있는지 여부(불침번이 켜져 있는데도 맥이 잠들었을 때 카드에 짧은 안내를 보여 주고, 깨어난 뒤 상태를 다시 확인하려고)</li>
+  <li>시간대(불침번 시간표의 시각을 맞추려고)</li>
+  <li>알림 권한의 상태(허용, 거부, 아직 묻지 않음. 알림이 꺼져 있을 때 설정 창에 안내를 보여 주려고)</li>
 </ul>
 
 <h3>6. 알림</h3>
-<p>몰입 세션이나 불침번 타이머가 끝나면 macOS 알림을 보낼 수 있습니다. 알림 권한은 시스템 설정에서 언제든 끌 수 있습니다.</p>
+<p>불침번과 몰입 세션에 관한 macOS 알림을 보낼 수 있습니다. 타이머가 끝났을 때, 배터리 지킴이가 불침번을 멈췄을 때, 불침번이 맥을 깨워 두지 못할 때가 그 예입니다. 알림은 이 맥 안에서 만들어지며 어디로도 전송되지 않습니다. 처음 보낼 때 macOS가 허용 여부를 물을 수 있으며, 알림 권한은 시스템 설정에서 언제든 끌 수 있습니다.</p>
 
 <h3>7. 아동의 개인정보</h3>
 <p>앱은 누구의 개인정보도 수집하지 않으므로 아동의 개인정보도 수집하지 않습니다.</p>
@@ -69,7 +72,7 @@
 
 <section id="en" lang="en">
 <h2>English</h2>
-<p class="meta"><strong>Effective date:</strong> September 30, 2026</p>
+<p class="meta"><strong>Effective date:</strong> October 3, 2026</p>
 <p>Owlight (“the app”) is a macOS menu bar utility made by Lumen Lab (“we”, “the developer”). This policy explains how the app handles your information.</p>
 
 <h3>1. Personal data we collect</h3>
@@ -90,12 +93,15 @@
 <h3>5. System information the app reads</h3>
 <p>To provide its features, the app reads the following on your Mac only. None of it is stored or sent anywhere.</p>
 <ul>
-  <li>Battery level and whether a power adapter is connected (Nightwatch battery guard, “while charging”).</li>
+  <li>Battery level and whether a power adapter is connected (Nightwatch battery guard, “while plugged in”).</li>
   <li>Which apps are running and which one is in front (automatic triggers, finding the window Halo highlights). Only window positions and sizes are used; window titles and screen contents are never read or recorded.</li>
+  <li>Whether your Mac went to sleep or woke up, and whether the display is on (to show a short note on the Nightwatch card when the Mac slept even though Nightwatch was on, and to check its state again after a wake).</li>
+  <li>The time zone (to time Nightwatch schedules correctly).</li>
+  <li>Whether notifications are allowed, denied or not yet asked (to show a hint in Settings when they are off).</li>
 </ul>
 
 <h3>6. Notifications</h3>
-<p>The app can post macOS notifications when a Focus Session or a Nightwatch timer ends. You can turn them off at any time in System Settings.</p>
+<p>The app can post local macOS notifications about Nightwatch and Focus Sessions: when a timer ends, when the battery guard stops Nightwatch, or when Nightwatch cannot keep your Mac awake. Notifications are created on your Mac and are never sent anywhere. macOS may ask for your permission the first time, and you can turn notifications off at any time in System Settings.</p>
 
 <h3>7. Children’s privacy</h3>
 <p>Because the app collects no personal data from anyone, it collects none from children.</p>
