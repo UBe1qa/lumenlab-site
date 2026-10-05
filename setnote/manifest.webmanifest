@@ -16,5 +16,11 @@
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "screenshots/workout.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "운동 중: 세트마다 지난번 무게와 횟수가 옆에 보여요" },
+    { "src": "screenshots/routines.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "루틴: 다음 차례 루틴을 바로 시작해요" },
+    { "src": "screenshots/progress.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "운동별 기록: 추정 1RM이 어떻게 변했는지 봐요" },
+    { "src": "screenshots/history.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "기록: 끝낸 운동이 날짜별로 쌓여요" }
   ]
 }
