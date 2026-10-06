@@ -580,6 +580,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* rows of icon buttons: 32px buttons 12px apart, so each gets the full 44px touch area without covering its neighbour */
 .excard-tools .icon-btn, .ed-tools .icon-btn { width: 32px; height: 32px; }
 
+/* record-day confetti canvas (celebrate): above the sheet, below the toast, never takes a tap */
+.confetti { position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none; }
+
 /* Reduce Motion: no scaling, sliding or pulsing; sheets and the toast fade instead, colour changes stay */
 @media (prefers-reduced-motion: reduce) {
   .set.pop .set-check, .done-badge, .pill-dot { animation: none; }
@@ -1882,6 +1885,8 @@ function finishWorkout(upd) {
   S.sheetEnter = true;
   render();
   window.scrollTo(0, 0);
+  // after the sheet has slid up (--dur-base), so the burst starts where the trophy finally sits
+  if (prs.length) setTimeout(() => { const top = topSheet(); if (top && top.kind === 'done') celebrate($('.done-badge')); }, 300);
 }
 
 /* ---------- rest timer, wake lock, sound ---------- */
@@ -1948,6 +1953,71 @@ function toast(msg, ms = 2400) {
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+/* ---------- celebrate ---------- */
+/* One short confetti burst from the trophy when a finished workout has a new record (t.prs). It only fires on
+   record days so it keeps meaning something. Opaque paper bits instead of the practice page's additive glow,
+   which vanishes on the white sheet; ink bits keep the lime ones visible on white. About 1.6 s and 80 bits,
+   then the canvas removes itself. The canvas lets touches through, so 확인 works mid-burst.
+   Reduce Motion gets nothing (the trophy and the 신기록 rows already say it); a hidden tab stops it. */
+let confettiStop = null;
+function celebrate(el) {
+  if (!el || document.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = el.getBoundingClientRect();
+  if (!box.width) return;
+  if (confettiStop) confettiStop();
+  const css = getComputedStyle(document.documentElement);
+  const tok = n => css.getPropertyValue(n).trim();
+  const colors = [tok('--accent'), tok('--pr-fill'), tok('--accent'), tok('--pr-fill'), tok('--ink')];
+  const W = window.innerWidth, H = window.innerHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const cv = document.createElement('canvas');
+  cv.className = 'confetti';
+  cv.setAttribute('aria-hidden', 'true');
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  document.body.appendChild(cv);
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const ox = box.left + box.width / 2, oy = box.top + box.height / 2;
+  const bits = [];
+  for (let i = 0; i < 80; i++) {
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.25; // upward fan, about ±110°
+    const v = 260 + Math.random() * 440; // px per second
+    bits.push({ x: ox, y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 14,
+      flip: Math.random() * 6.3, vf: 7 + Math.random() * 9, w: 6 + Math.random() * 5, h: 3.5 + Math.random() * 3,
+      round: i % 4 === 0, c: colors[i % colors.length] });
+  }
+  const DUR = 1.6, FADE = 0.5;
+  let raf = 0, t = 0, last = 0;
+  const stop = () => {
+    cancelAnimationFrame(raf); cv.remove();
+    document.removeEventListener('visibilitychange', stop);
+    if (confettiStop === stop) confettiStop = null;
+  };
+  confettiStop = stop;
+  document.addEventListener('visibilitychange', stop);
+  const frame = now => {
+    const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 0;
+    last = now; t += dt;
+    if (t >= DUR) return stop();
+    ctx.clearRect(0, 0, W, H);
+    const drag = Math.exp(-2.4 * dt);
+    ctx.globalAlpha = t < DUR - FADE ? 1 : (DUR - t) / FADE;
+    for (const b of bits) {
+      b.vx *= drag; b.vy = b.vy * drag + 900 * dt;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      b.rot += b.vr * dt; b.flip += b.vf * dt;
+      ctx.save();
+      ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+      ctx.fillStyle = b.c;
+      if (b.round) { ctx.beginPath(); ctx.arc(0, 0, b.h * 0.8, 0, Math.PI * 2); ctx.fill(); }
+      else { ctx.scale(1, Math.cos(b.flip)); ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); }
+      ctx.restore();
+    }
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
 }
 
 /* ---------- theme, install, back button ---------- */
