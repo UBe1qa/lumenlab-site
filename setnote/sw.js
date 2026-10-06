@@ -1,7 +1,7 @@
 /* SetNote service worker: keeps the app shell so the installed app opens without a connection.
    scripts/build-web.mjs writes a hash of the shipped files into VERSION, so every release is a new
    worker with its own cache; the browser installs it in the background and the next launch uses it. */
-const VERSION = '572e251170fc';
+const VERSION = '34b7266327df';
 const SHELL = 'setnote-shell-' + VERSION;
 const FONTS = 'setnote-fonts-v1';
 const FILES = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
