@@ -518,7 +518,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .sd-sets li { display: grid; grid-template-columns: 26px auto; gap: 8px; font-family: var(--font-num); font-size: calc(17 * var(--fs)); font-weight: 600; }
 .sd-sets li span:first-child { color: var(--muted); }
 
-.done-hero { text-align: center; padding-block: 4px 8px; display: grid; justify-items: center; gap: 2px; }
+.done-hero { position: relative; text-align: center; padding-block: 4px 8px; display: grid; justify-items: center; gap: 2px; }
 .done-badge { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); margin-bottom: 8px; animation: pop var(--dur-slow) cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes pop { 0% { transform: scale(.7); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
 .done-badge .ic { width: 30px; height: 30px; stroke-width: 2.6; }
@@ -583,11 +583,52 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* record-day confetti canvas (celebrate): above the sheet, below the toast, never takes a tap */
 .confetti { position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none; }
 
+/* Basic reactions, one rule set for the whole app (--dur-*, --ease-standard): a press shrinks the control a
+   little, new content rises 8px while fading in. Entrances are one-shot classes (S.enter, S.sheetEnter) that the
+   next render drops, so typing or a timer tick never replays them. Only transform and opacity move. */
+.chip, .pill-go { transition: transform var(--dur-fast) var(--ease-standard), background-color var(--dur-fast), color var(--dur-fast); }
+.tab { transition: transform var(--dur-fast) var(--ease-standard), background-color var(--dur-fast), color var(--dur-fast); }
+.icon-btn { transition: transform var(--dur-fast) var(--ease-standard), background-color var(--dur-fast); }
+.chip:active, .tab:active, .pill-go:active, .icon-btn:active:not(:disabled) { transform: scale(.94); }
+.pk-row:active, .set-prev:not(:disabled):active { background: var(--surface-2); }
+.toggle:active { background: var(--surface-3); }
+.view.enter, .set.add, .excard.add { animation: rise var(--dur-base) var(--ease-standard); }
+.wo.enter { animation: sheet-up var(--dur-base) var(--ease-standard); }
+.pr-row.in, .cmp-row.in { animation: rise var(--dur-base) var(--ease-standard) backwards; animation-delay: calc(250ms + var(--i, 0) * 45ms); }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes appear { from { opacity: 0; } }
+
+/* milestone stamp on the done sheet (1st, 5th, 10th … workout): drops onto the corner like a rubber stamp,
+   then one lime ring spreads out. About 1 s, CSS only; without .stamp (re-render, Reduce Motion) it just sits there. */
+.done-hero.has-mile { padding-top: 26px; } /* room above the stamp so its ripple isn't cut by the sheet edge */
+.mile { position: absolute; right: 0; top: 22px; width: 76px; height: 76px; border-radius: 50%; display: grid; place-content: center; justify-items: center; background: var(--ink); color: var(--bg); transform: rotate(-12deg); line-height: 1.05; z-index: 1; }
+.mile::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; border: 1.5px dashed var(--bg); opacity: .45; }
+.mile b { font-size: calc(24 * var(--fs-lg)); font-weight: 800; }
+.mile b.num { font-family: var(--font-num); font-size: calc(30 * var(--fs-lg)); line-height: .95; }
+.mile span { font-size: min(calc(10.5 * var(--fs)), 12.5px); font-weight: 700; max-width: 56px; word-break: keep-all; }
+.mile.stamp { animation: stamp 420ms cubic-bezier(.55, 0, .75, .2) 300ms backwards; }
+.mile.stamp::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--accent); opacity: 0; animation: ripple 650ms var(--ease-standard) 690ms; }
+@keyframes stamp { 0% { opacity: 0; transform: rotate(-26deg) scale(2.3); } 75% { opacity: 1; transform: rotate(-10deg) scale(.9); } 100% { opacity: 1; transform: rotate(-12deg) scale(1); } }
+@keyframes ripple { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(1.55); } }
+
+/* exercise chart drawing itself when its sheet opens (see sparkline) */
+.chart svg.draw .sp-line { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: draw-line 700ms var(--ease-standard) 150ms forwards; }
+.chart svg.draw .sp-area, .chart svg.draw .sp-labels { animation: appear 300ms ease-out 550ms backwards; }
+.chart svg.draw .sp-dot { transform-box: fill-box; transform-origin: center; animation: dot-in 320ms cubic-bezier(.3, 1.6, .5, 1) 780ms backwards; }
+.sp-ring { fill: none; stroke: var(--accent-text); stroke-width: 2.5; opacity: 0; transform-box: fill-box; transform-origin: center; animation: ring 700ms var(--ease-standard) 1000ms; }
+@keyframes draw-line { to { stroke-dashoffset: 0; } }
+@keyframes dot-in { from { transform: scale(0); } }
+@keyframes ring { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(4); } }
+
 /* Reduce Motion: no scaling, sliding or pulsing; sheets and the toast fade instead, colour changes stay */
 @media (prefers-reduced-motion: reduce) {
   .set.pop .set-check, .done-badge, .pill-dot { animation: none; }
   .btn:active:not(:disabled), .hero-go:active, .play:active, .set-check:active { transform: none; }
-  .sheet.enter { animation-name: fade-in; }
+  .chip:active, .tab:active, .pill-go:active, .icon-btn:active:not(:disabled) { transform: none; }
+  .sheet.enter, .wo.enter, .view.enter, .set.add, .excard.add, .pr-row.in, .cmp-row.in { animation-name: fade-in; }
+  .mile.stamp, .mile.stamp::after, .sp-ring,
+  .chart svg.draw .sp-line, .chart svg.draw .sp-area, .chart svg.draw .sp-labels, .chart svg.draw .sp-dot { animation: none; }
+  .chart svg.draw .sp-line { stroke-dasharray: none; stroke-dashoffset: 0; }
   .toast { transform: translate(-50%, 0); }
   .wo-bar i, .rest-prog, .switch::after { transition: none; }
 }
@@ -763,6 +804,7 @@ const S = {
   rest: null,
   wroteOk: false,
   pop: null,
+  enter: new Set(), // one-shot entrance keys ('view', 'wo', 'ex:<u>', 'set:<u>:<i>'), cleared after each render
 };
 const prof = () => ({ ...DEF_PROFILE, ...S.profile, custom: Array.isArray(S.profile.custom) ? S.profile.custom : [] });
 
@@ -1173,7 +1215,7 @@ function render() {
   const key = top ? S.sheets.length + ':' + top.kind + ':' + (top.id || '') : '';
   rendering = true;
   try {
-    $('#main').innerHTML = headerHtml() + viewHtml();
+    $('#main').innerHTML = headerHtml() + `<div class="view${S.enter.has('view') ? ' enter' : ''}">${viewHtml()}</div>`;
     const tb = $('#tabbar');
     tb.innerHTML = tabbarHtml();
     tb.hidden = !!(S.active && S.workoutOpen);
@@ -1189,6 +1231,7 @@ function render() {
   lastSheetKey = key;
   S.sheetEnter = false;
   S.pop = null;
+  S.enter.clear();
 
   if (fid) {
     const el = document.getElementById(fid);
@@ -1436,7 +1479,7 @@ function exCardHtml(ex, k, n) {
     const p = f.prev;
     const prevTxt = p ? `${p.w ? (ex.bw ? '+' : '') + fmtW(p.w) : (ex.bw ? '맨몸' : '—')}×${p.r ?? '-'}` : '—';
     const prevHtml = prevTxt.replace('×', '<wbr>×');
-    return `<div class="set${st.done ? ' done' : ''}${S.pop === ex.u + ':' + i ? ' pop' : ''}">
+    return `<div class="set${st.done ? ' done' : ''}${S.pop === ex.u + ':' + i ? ' pop' : ''}${S.enter.has('set:' + ex.u + ':' + i) ? ' add' : ''}">
       <span class="set-n">${i + 1}</span>
       <button class="set-prev" data-act="wo-copy-prev" data-u="${ex.u}" data-i="${i}" ${p ? '' : 'disabled'} aria-label="${p ? '지난번 값 ' + prevTxt + ' 넣기' : '지난번 기록 없음'}">${prevHtml}</button>
       <input id="w-${ex.u}-${i}" class="num-in" inputmode="decimal" enterkeyhint="next" autocomplete="off" data-field="w" data-u="${ex.u}" data-i="${i}" value="${esc(st.w)}" placeholder="${esc(ph.w)}" aria-label="${i + 1}세트 무게 kg">
@@ -1445,7 +1488,7 @@ function exCardHtml(ex, k, n) {
     </div>`;
   }).join('');
   const allDone = ex.sets.length > 0 && ex.sets.every(s => s.done);
-  return `<section class="excard${allDone ? ' all-done' : ''}">
+  return `<section class="excard${allDone ? ' all-done' : ''}${S.enter.has('ex:' + ex.u) ? ' add' : ''}">
     <div class="excard-head">
       <span class="ex-idx num" aria-hidden="true">${k + 1}</span>
       <button class="excard-name" data-act="open-ex" data-id="${esc(ex.exId)}">${esc(ex.name)}</button>
@@ -1474,7 +1517,7 @@ function workoutHtml() {
   const body = a.exercises.length
     ? a.exercises.map((e, k) => exCardHtml(e, k, a.exercises.length)).join('')
     : `<div class="wo-empty">아직 운동이 없어요.<br>아래 ‘운동 추가’를 눌러 오늘 할 운동을 고르세요.</div>`;
-  return `<div class="wo" id="wo" role="dialog" aria-label="운동 기록 중">
+  return `<div class="wo${S.enter.has('wo') ? ' enter' : ''}" id="wo" role="dialog" aria-label="운동 기록 중">
     <header class="wo-head"><div class="wo-head-in">
       <button class="icon-btn" data-act="wo-minimize" aria-label="접어두기">${I('down')}</button>
       <div class="wo-title"><div class="wo-name">${esc(a.routineName || '자유 운동')}</div><div class="wo-sub">${fmtTime(a.startedAt)} 시작</div></div>
@@ -1600,7 +1643,7 @@ const SHEETS = {
       <div class="stat"><small>추정 1RM</small><span class="num">${fmtW(round1(b.e1))}<em>kg</em></span></div>` : `<div class="stat"><small>최다 반복</small><span class="num">${b.maxR || 0}<em>회</em></span></div>`}
       <div class="stat"><small>한 횟수</small><span class="num">${hist.length}<em>번</em></span></div>
     </div>`;
-    const chart = pts.length >= 2 ? `<div class="chart"><div class="chart-h"><span>${useE1 ? '세션별 추정 1RM (kg)' : '세션별 최다 반복 (회)'}</span><span>최근 ${pts.length}번</span></div>${sparkline(pts)}</div>` : '';
+    const chart = pts.length >= 2 ? `<div class="chart"><div class="chart-h"><span>${useE1 ? '세션별 추정 1RM (kg)' : '세션별 최다 반복 (회)'}</span><span>최근 ${pts.length}번</span></div>${sparkline(pts, S.sheetEnter)}</div>` : '';
     const list = hist.slice(0, 40).map(h => `<div class="hist-row"><div class="hist-top"><span>${fmtDate(h.s.endedAt)} · ${relDay(h.s.endedAt)}</span><span>${esc(h.s.routineName || '자유 운동')}</span></div><div class="hist-sets">${esc(setsStr(h.ex.sets, h.ex.bw))}</div></div>`).join('');
     return {
       title: esc(info.name),
@@ -1648,11 +1691,14 @@ const SHEETS = {
 
   done: t => {
     const s = t.session;
-    const prs = t.prs.length ? `<div class="pr-list">${t.prs.map(p => `<div class="pr-row">${I('trophy')}<span><b>${esc(p.name)}</b> 신기록 · 추정 1RM ${fmtW(round1(p.from))} → <b>${fmtW(round1(p.to))}kg</b></span></div>`).join('')}</div>` : '';
-    const cmp = t.cmp.map(c => `<div class="cmp-row"><b>${esc(c.name)}</b><span class="cmp-d${c.up ? ' up' : ''}">${c.up ? I('up') : c.dn ? I('dn') : ''}${esc(c.txt)}</span></div>`).join('');
+    // rows rise in one after another only while the sheet slides up, never on a later re-render
+    const st = (i, cls) => S.sheetEnter ? ` class="${cls} in" style="--i:${Math.min(i, 8)}"` : ` class="${cls}"`;
+    const prs = t.prs.length ? `<div class="pr-list">${t.prs.map((p, i) => `<div${st(i, 'pr-row')}>${I('trophy')}<span><b>${esc(p.name)}</b> 신기록 · 추정 1RM ${fmtW(round1(p.from))} → <b>${fmtW(round1(p.to))}kg</b></span></div>`).join('')}</div>` : '';
+    const cmp = t.cmp.map((c, i) => `<div${st(i + t.prs.length, 'cmp-row')}><b>${esc(c.name)}</b><span class="cmp-d${c.up ? ' up' : ''}">${c.up ? I('up') : c.dn ? I('dn') : ''}${esc(c.txt)}</span></div>`).join('');
+    const mile = t.mile ? `<div class="mile${S.sheetEnter ? ' stamp' : ''}" role="img" aria-label="${t.mile === 1 ? '첫 운동' : t.mile + '번째 운동'}을 마쳤어요">${t.mile === 1 ? '<b>첫</b><span>운동</span>' : `<b class="num">${t.mile}</b><span>번째 운동</span>`}</div>` : '';
     return {
       title: '수고 많으셨어요!',
-      body: `<div class="done-hero"><div class="done-badge">${I(t.prs.length ? 'trophy' : 'check')}</div><div class="num">${fmtInt(s.volume)}<small>kg</small></div><p>총 볼륨</p>
+      body: `<div class="done-hero${mile ? ' has-mile' : ''}">${mile}<div class="done-badge">${I(t.prs.length ? 'trophy' : 'check')}</div><div class="num"><span id="done-vol">${fmtInt(s.volume)}</span><small>kg</small></div><p>총 볼륨</p>
           <div class="done-stats"><div><b>${fmtDur(s.endedAt - s.startedAt)}</b><small>운동 시간</small></div><div><b>${s.setCount}</b><small>세트</small></div><div><b>${(s.exercises || []).length}</b><small>운동</small></div></div></div>
         ${prs}<h3 class="sub-h">지난번과 비교</h3><div class="cmp">${cmp}</div>`,
       foot: `<button class="btn btn-primary wide" data-act="sheet-close">확인</button>`,
@@ -1717,7 +1763,11 @@ function pickerListHtml(p) {
 }
 function topEditor() { for (let i = S.sheets.length - 1; i >= 0; i--) if (S.sheets[i].kind === 'editor') return S.sheets[i]; return null; }
 
-function sparkline(pts) {
+/* draw: the exercise sheet just opened. The line draws itself left to right (0.7 s), the area and labels fade in
+   under it, and the last dot lands; when the latest session is the best so far, one lime ring spreads from it.
+   Only on open (a re-render shows the finished chart). The line moves stroke-dashoffset on one small path,
+   which repaints that SVG only, no layout. Reduce Motion shows the finished chart. */
+function sparkline(pts, draw) {
   const W = 320, H = 132, pl = 6, pr = 66, pt = 14, pb = 24;
   const vs = pts.map(p => p.v);
   const vmax = Math.max(...vs), vmin = Math.min(...vs);
@@ -1735,15 +1785,18 @@ function sparkline(pts) {
   if (Math.abs(yMax - yLast) > 14) labels.push(`<text class="sp-txt" x="${W - pr + 8}" y="${(yMax + 4).toFixed(1)}">최고 ${fmtW(round1(vmax))}</text>`);
   if (Math.abs(yMin - yLast) > 14 && Math.abs(yMin - yMax) > 14) labels.push(`<text class="sp-txt" x="${W - pr + 8}" y="${(yMin + 4).toFixed(1)}">${fmtW(round1(vmin))}</text>`);
   const d0 = new Date(pts[0].t), d1 = new Date(pts[n - 1].t);
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 ${n}번 기록 추이, 마지막 ${fmtW(round1(lastV))}">
+  const best = vs.slice(0, -1).every(v => v < lastV);
+  const lx = x(n - 1).toFixed(1), ly = yLast.toFixed(1);
+  return `<svg${draw ? ' class="draw"' : ''} viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 ${n}번 기록 추이, 마지막 ${fmtW(round1(lastV))}${best ? ', 지금까지 최고' : ''}">
     <line class="sp-grid" x1="${pl}" x2="${W - pr}" y1="${yMax.toFixed(1)}" y2="${yMax.toFixed(1)}"/>
     <line class="sp-grid" x1="${pl}" x2="${W - pr}" y1="${yMin.toFixed(1)}" y2="${yMin.toFixed(1)}"/>
     <path class="sp-area" d="${area}" opacity=".7"/>
-    <polyline class="sp-line" points="${line}"/>
-    <circle class="sp-dot" cx="${x(n - 1).toFixed(1)}" cy="${yLast.toFixed(1)}" r="4.5"/>
-    ${labels.join('')}
+    <path class="sp-line" pathLength="1" d="M${line.split(' ').join(' L')}"/>
+    ${draw && best ? `<circle class="sp-ring" cx="${lx}" cy="${ly}" r="4.5"/>` : ''}
+    <circle class="sp-dot" cx="${lx}" cy="${ly}" r="4.5"/>
+    <g class="sp-labels">${labels.join('')}
     <text class="sp-txt" x="${pl}" y="${H - 6}">${d0.getMonth() + 1}/${d0.getDate()}</text>
-    <text class="sp-txt" x="${W - pr}" y="${H - 6}" text-anchor="end">${d1.getMonth() + 1}/${d1.getDate()}</text>
+    <text class="sp-txt" x="${W - pr}" y="${H - 6}" text-anchor="end">${d1.getMonth() + 1}/${d1.getDate()}</text></g>
   </svg>`;
 }
 
@@ -1768,7 +1821,7 @@ function guardStart(fn) {
 }
 function startWorkout(name, routineId, items) {
   S.active = { id: uid(), routineId: routineId || null, routineName: name || '자유 운동', startedAt: Date.now(), updatedAt: Date.now(), exercises: items.map(it => mkWoEx(it.exId, it)) };
-  S.sheets = []; S.workoutOpen = true; S.rest = null;
+  S.sheets = []; S.workoutOpen = true; S.rest = null; S.enter.add('wo');
   touchActive(); flushActive();
   keepAwake(true);
   render();
@@ -1880,13 +1933,54 @@ function finishWorkout(upd) {
     }
   });
   keepAwake(false);
+  const mile = milestoneFor(S.sessions.length);
   S.tab = 'history'; lsSet('setnote:tab', 'history');
-  S.sheets = [{ kind: 'done', session, prs, cmp }];
+  S.sheets = [{ kind: 'done', session, prs, cmp, mile }];
   S.sheetEnter = true;
   render();
   window.scrollTo(0, 0);
-  // after the sheet has slid up (--dur-base), so the burst starts where the trophy finally sits
-  if (prs.length) setTimeout(() => { const top = topSheet(); if (top && top.kind === 'done') celebrate($('.done-badge')); }, 300);
+  countUp($('#done-vol'), session.volume);
+  // after the sheet has slid up (--dur-base), so the burst starts where the trophy finally sits;
+  // on a milestone day it waits until the stamp has landed and its ripple has faded, so only one big effect plays at a time
+  if (!prs.length) return;
+  let fired = false;
+  const burst = () => { if (fired) return; fired = true; const top = topSheet(); if (top && top.kind === 'done') celebrate($('.done-badge')); };
+  const stamp = mile && $('.mile.stamp');
+  if (stamp) {
+    // the CSS clock starts at the first painted frame, which comes late on a long history or a slow phone,
+    // so follow the ripple's own end; the timer only covers a ripple that never runs
+    stamp.addEventListener('animationend', e => { if (e.animationName === 'ripple') burst(); });
+    setTimeout(burst, 2500);
+  } else setTimeout(burst, 300);
+}
+
+/* Workout-count milestones (1st, 5th, 10th, 25th, 50th, 75th, 100th, then every 50th) get a stamp on the done
+   sheet. Early ones come closer together so the first weeks feel like progress. Each number is stamped once per
+   device: the highest one shown is remembered, so deleting old sessions and finishing again doesn't repeat it.
+   Skipped until the account's sessions are known, or a half-loaded list would call a 40th workout the first. */
+const MILESTONES = [1, 5, 10, 25, 50, 75, 100];
+function milestoneFor(n) {
+  if (!S.loaded.sessions || (S.mode === 'cloud' && !S.fresh.sessions)) return 0;
+  if (!(MILESTONES.includes(n) || (n > 100 && n % 50 === 0))) return 0;
+  const key = 'setnote:milestone:' + (S.uid || 'local');
+  if (n <= (parseInt(lsGet(key), 10) || 0)) return 0;
+  lsSet(key, String(n));
+  return n;
+}
+
+/* The total volume rolls up from 0 while the done sheet slides in (0.7 s, ease-out), a value-change reaction.
+   The final number is already in the HTML, so Reduce Motion, a hidden tab or a re-render just shows it. */
+function countUp(el, to) {
+  if (!el || !(to > 0) || document.hidden || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const DUR = 700, t0 = performance.now();
+  const step = now => {
+    if (!el.isConnected) return;
+    const k = Math.min((now - t0) / DUR, 1);
+    el.textContent = fmtInt(Math.round(to * (1 - Math.pow(1 - k, 3))));
+    if (k < 1) requestAnimationFrame(step);
+  };
+  el.textContent = '0';
+  requestAnimationFrame(step);
 }
 
 /* ---------- rest timer, wake lock, sound ---------- */
@@ -2136,7 +2230,7 @@ function applyPicker() {
     });
     render();
   } else if (S.active) {
-    ids.forEach(id => S.active.exercises.push(mkWoEx(id, null)));
+    ids.forEach(id => { const e = mkWoEx(id, null); S.active.exercises.push(e); S.enter.add('ex:' + e.u); });
     touchActive();
     render();
     const wo = $('#wo'); if (wo) wo.scrollTop = wo.scrollHeight;
@@ -2273,7 +2367,7 @@ async function importData(rs, ss, cust) {
 
 /* ---------- actions ---------- */
 const A = {
-  tab: d => { S.tab = d.tab; lsSet('setnote:tab', d.tab); render(); window.scrollTo(0, 0); },
+  tab: d => { if (S.tab !== d.tab) S.enter.add('view'); S.tab = d.tab; lsSet('setnote:tab', d.tab); render(); window.scrollTo(0, 0); },
   settings: () => pushSheet({ kind: 'settings' }),
   'sheet-close': () => popSheet(),
   'sheet-bg': () => { const t = topSheet(); if (t && !['editor', 'finish', 'picker'].includes(t.kind)) popSheet(); },
@@ -2281,7 +2375,7 @@ const A = {
   migrate: () => migrateLocal(),
   'migrate-hide': () => { S.migrateHidden = true; render(); },
   'retry-cloud': () => { if (S.deniedUid) lsDel('setnote:cloud-denied:' + S.deniedUid); S.deniedUid = null; toast('새로고침하면 바로 다시 시도해요', 3600); render(); },
-  'resume-active': () => { S.sheets = []; S.workoutOpen = true; keepAwake(true); render(); },
+  'resume-active': () => { S.sheets = []; S.workoutOpen = true; S.enter.add('wo'); keepAwake(true); render(); },
 
   'new-routine': () => pushSheet({ kind: 'editor', draft: { id: null, name: '', note: '', exercises: [] } }),
   'open-routine': d => pushSheet({ kind: 'routine', id: d.id }),
@@ -2341,7 +2435,7 @@ const A = {
     })));
   },
 
-  'wo-open': () => { S.workoutOpen = true; keepAwake(true); render(); },
+  'wo-open': () => { S.workoutOpen = true; S.enter.add('wo'); keepAwake(true); render(); },
   'wo-minimize': () => { S.workoutOpen = false; flushActive(); render(); },
   'wo-check': d => checkSet(d.u, +d.i),
   'wo-copy-prev': d => {
@@ -2353,7 +2447,7 @@ const A = {
   'wo-add-set': d => {
     const ex = findEx(d.u); if (!ex) return;
     if (ex.sets.length >= 30) { toast('세트는 30개까지 넣을 수 있어요'); return; }
-    ex.sets.push({ w: '', r: '', done: false }); touchActive(); render();
+    ex.sets.push({ w: '', r: '', done: false }); S.enter.add('set:' + ex.u + ':' + (ex.sets.length - 1)); touchActive(); render();
   },
   'wo-del-set': d => { const ex = findEx(d.u); if (!ex || ex.sets.length <= 1) return; ex.sets.pop(); touchActive(); render(); },
   'wo-move': d => {
